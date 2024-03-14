@@ -4,6 +4,7 @@ import os
 import mapvbvd
 import numpy as np
 from helpers.nufft.nufft_pt import PTNufft
+from pypilottone import radial
 from tqdm import tqdm
 
 from load_convert.ext.coils import calculate_csm_walsh
@@ -156,19 +157,21 @@ def load_single_vbvd(path_file: str, param_parser_grasp, param_parser_pproc):
     # twix_obj.image.flagRemoveOS = True
     twix_obj.image.squeeze = True
     k2_ = twix_obj.image[""]
-    # implement here
+    # implement here, this was manual OS removal
     # s = k2_.shape
     # img_space_OS_removed = np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(k2_, axes=(0)), axis=-1), axes=(0))
-    oversampling_indexes = np.arange(
-        np.int46(k2_.shape[0] / 4), np.int64(k2_.shape[0] * 3 / 4)
-    )
-    kspace_justOS = np.fft.fft(
-        np.fft.ifft(kspace_justOS, axis=0)[oversampling_indexes, ...], axis=0
-    )
-    ispace_zeroOS = np.fft.ifft(k2_, axis=0)
-    ispace_zeroOS[oversampling_indexes, ...] = np.complex64(0)
-    k2_ = np.fft.fft(ispace_zeroOS, axis=0)
-    del ispace_zeroOS
+    # oversampling_indexes = np.arange(
+    #     np.int46(k2_.shape[0] / 4), np.int64(k2_.shape[0] * 3 / 4)
+    # )
+    # kspace_justOS = np.fft.fft(
+    #     np.fft.ifft(kspace_justOS, axis=0)[oversampling_indexes, ...], axis=0
+    # )
+    # ispace_zeroOS = np.fft.ifft(k2_, axis=0)
+    # ispace_zeroOS[oversampling_indexes, ...] = np.complex64(0)
+    # k2_ = np.fft.fft(ispace_zeroOS, axis=0)
+    # del ispace_zeroOS
+
+    k2_ = radial.extract_pt_radial(k2_, header=twix_obj.hdr)
 
     # edit grasp and pproc parameters using values in data file
     edit_grasp_pproc_params(
