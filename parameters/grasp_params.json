@@ -26,7 +26,7 @@
   "lam": {
     "section": "grasp_params",
     "helpTip": "Param in ||Ax-Y||_2+lam||TV(x)||_1",
-    "val": 0.125,
+    "val": 0.05,
     "type": "float"
   },
   "max_num_iter": {
