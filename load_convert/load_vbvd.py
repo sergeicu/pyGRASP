@@ -171,8 +171,6 @@ def load_single_vbvd(path_file: str, param_parser_grasp, param_parser_pproc):
     # k2_ = np.fft.fft(ispace_zeroOS, axis=0)
     # del ispace_zeroOS
 
-    k2_ = radial.extract_pt_radial(k2_, header=twix_obj.hdr)
-
     # edit grasp and pproc parameters using values in data file
     edit_grasp_pproc_params(
         param_parser_grasp, param_parser_pproc, twix_obj, is_twix_obj_list
@@ -234,10 +232,16 @@ def load_single_vbvd(path_file: str, param_parser_grasp, param_parser_pproc):
 
     # Chunk concatenation
     k2 = np.zeros(
-        [num_sample, num_coil, num_spoke * num_chunk, num_slice], dtype=np.complex64
+        [num_sample, num_coil, num_spoke * num_chunk, num_slice], dtype=np.complex128
     )
     for idx in range(num_chunk):
         k2[:, :, idx * num_spoke : (idx + 1) * num_spoke, :] = k2_[:, :, :, :, idx]
+
+    pilottone_on = True  # we'll want to add checks for this later
+    if pilottone_on:
+        print("extracting PT")
+        k2, _ = radial.extract_pt_radial(k2, twix_obj.hdr)
+        print("finished removing PT")
 
     # TODO: do not pass fixxed golden angle flag
     k_samples, dcf = calculate_dcf_traj(
@@ -351,4 +355,4 @@ def edit_grasp_pproc_params(
         # }
         #
     except Exception as e:
-        print("An exception occurred in edit_grasp_params: " + e)
+        print(f"An exception occurred in edit_grasp_params: {e}")
