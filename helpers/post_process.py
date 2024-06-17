@@ -7,7 +7,8 @@ from tqdm import tqdm
 def interpolate_slice(volume: np.ndarray,
                       img_size: tuple,
                       rate_os: float,
-                      flag_fft_shift: bool = True):
+                      flag_fft_shift: bool = False,
+                      flag_interpolate_z: bool = False):
     """
     Reconstructed image dimensions does not usually fit scanner reconstruction
     dimensions. This function replicates the operation in the scanner:
@@ -45,18 +46,19 @@ def interpolate_slice(volume: np.ndarray,
             volume = np.pad(volume, padding, 'constant', constant_values=0)
 
     # oversampling
-    total_slices = np.round(img_sl * rate_os)
+    if flag_interpolate_z:
+        total_slices = np.round(img_sl * rate_os)
 
-    # Interpolate the number of slices to match output dim
-    vol_oversampled = np.array(Parallel(n_jobs=-2)(
-        delayed(resample)(volume[:, idx_v, :, :], int(total_slices), axis=0) for
-        idx_v in tqdm(range(volume.shape[1]))))
-    # reshape to original form NSl x Nv x NS x NS
-    vol_oversampled = np.transpose(vol_oversampled, (1, 0, 2, 3))
+        # Interpolate the number of slices to match output dim
+        vol_oversampled = np.array(Parallel(n_jobs=-2)(
+            delayed(resample)(volume[:, idx_v, :, :], int(total_slices), axis=0) for
+            idx_v in tqdm(range(volume.shape[1]))))
+        # reshape to original form NSl x Nv x NS x NS
+        vol_oversampled = np.transpose(vol_oversampled, (1, 0, 2, 3))
 
-    # crop the samples that are outside of the range
-    volume = vol_oversampled[range(int(np.floor(
-        (total_slices - img_sl) / 2.)), int(img_sl + np.floor(
-        (total_slices - img_sl) / 2.))), :, :, :]
+        # crop the samples that are outside of the range
+        volume = vol_oversampled[range(int(np.floor(
+            (total_slices - img_sl) / 2.)), int(img_sl + np.floor(
+            (total_slices - img_sl) / 2.))), :, :, :]
 
     return volume
