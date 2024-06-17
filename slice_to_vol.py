@@ -8,17 +8,20 @@ import argparse
 from parameters.param_parse import PostProcessParamParse
 import scipy.io as sio
 
-def corrHead(fileName, dx, dy, dz):
+def corrHead(fileName, dx, dy, dz,flag_interpolate_z=False):
     imo = nib.load(fileName)
-    newheader = imo.header.copy()
-    newheader['pixdim'][1] = dx
-    newheader['pixdim'][2] = dy
-    newheader['pixdim'][3] = dz
-    newheader['pixdim'][4] = dt
+    if flag_interpolate_z:
+        newheader = imo.header.copy()
+        newheader['pixdim'][1] = dx
+        newheader['pixdim'][2] = dy
+        newheader['pixdim'][3] = dz
+        newheader['pixdim'][4] = dt
 
-    #newheader['qoffset_x'] = -155.138
-    #newheader['qoffset_y'] = 13.7454
-    #newheader['qoffset_z'] = 218.226
+        #newheader['qoffset_x'] = -155.138
+        #newheader['qoffset_y'] = 13.7454
+        #newheader['qoffset_z'] = 218.226
+    else: 
+        newheader = imo.header
     im = imo.get_fdata()
     imonew = nib.Nifti1Image(im, affine=imo.affine, header=newheader)
     nib.save(imonew, fileName)
@@ -51,6 +54,8 @@ parser.add_argument('-o', '--root_out',
                     type=str,
                     default=None,
                     help='[output] Save path')
+
+scaleto32000=False
 
 args = parser.parse_args()
 
@@ -85,7 +90,7 @@ rec_volume = np.array(rec_volume)
 
 init_num_slice = rec_volume.shape[0]
 # Interpolate slices to match previous reconstructions
-rec_volume = interpolate_slice(rec_volume, post_img_size, rate_os, flag_fft_shift)
+rec_volume = interpolate_slice(rec_volume, post_img_size, rate_os, flag_fft_shift=False,flag_interpolate_z=False)
 
 now = datetime.now()
 date_time = now.strftime("%m_%d_%Y_%H_%M_%S")
@@ -94,8 +99,9 @@ print("Saving...")
 # To save in nifti format the data should be uint16
 max_p = np.max(np.abs(rec_volume))
 min_p = np.min(np.abs(rec_volume))
+scaler = 2**15 if scaleto32000 else 1 
 rec_vol_16 = np.array(np.round((np.abs(rec_volume) - min_p) /
-                               (max_p - min_p) * 2 ** 15), dtype=np.uint16)
+                               (max_p - min_p) * scaler), dtype=np.uint16)
 # save 4D volume
 # Change dimensions from NSl x Nv x Ns x Ns to Ns x Ns x NSl x Nv
 rec_vol_16 = np.transpose(rec_vol_16, [2, 3, 0, 1])
@@ -116,7 +122,7 @@ if not os.path.exists(rec_save_folder):
 
 nii_dat.to_filename(file_name)
 
-corrHead(file_name, dx, dy, dz)
+corrHead(file_name, dx, dy, dz,flag_interpolate_z=False)
 
 param_file = os.path.join(rec_save_folder, date_time + '-params.json')
 param_parser.save_struct_to_file(param_file)
