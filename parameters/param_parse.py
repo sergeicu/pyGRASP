@@ -10,8 +10,12 @@ class ParamParse(object):
 
     def check_and_parse(self, required_params, required_fields):
         # Check parameters
-        assert (set(required_params) == set(self.params_struct.keys())), \
-            "Missing parameters in param file! Required{}".format(required_params)
+        # from IPython import embed; embed()
+        for param in required_params: 
+            assert param in self.params_struct.keys(),f"Missing parameter in param file! Required{param}"
+            
+        # assert (set(required_params) == set(self.params_struct.keys())), \
+        #     "Missing parameters in param file! Required{}".format(required_params)
 
         for key in list(self.params_struct.keys()):
             # Check keys
