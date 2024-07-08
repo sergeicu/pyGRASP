@@ -54,13 +54,29 @@ parser.add_argument('-o', '--root_out',
                     type=str,
                     default=None,
                     help='[output] Save path')
+parser.add_argument('--scaleto32000',
+                    action="store_true",
+                    help='scale images to nifti format with max val of 32000')
+parser.add_argument('--no_interpolate_z',
+                    action="store_true",
+                    help='do not interpolate slice')
+parser.add_argument('--no_fft_shift',
+                    action="store_true",
+                    help='do not fft shift the slices')
 
-scaleto32000=False
+
+
 
 args = parser.parse_args()
 
 param_parser = PostProcessParamParse(json_path=args.root_json)
 parameters = param_parser.get_param_val()
+
+# flags 
+scaleto32000=False if args.donotscale else True
+flag_interpolate_z=False if args.no_interpolate_z else True
+flag_fft_shift =False if args.no_fft_shift else True 
+
 
 # General parameters
 root_rec = args.root_rec
@@ -90,7 +106,7 @@ rec_volume = np.array(rec_volume)
 
 init_num_slice = rec_volume.shape[0]
 # Interpolate slices to match previous reconstructions
-rec_volume = interpolate_slice(rec_volume, post_img_size, rate_os, flag_fft_shift=False,flag_interpolate_z=False)
+rec_volume = interpolate_slice(rec_volume, post_img_size, rate_os, flag_fft_shift=flag_fft_shift,flag_interpolate_z=flag_interpolate_z)
 
 now = datetime.now()
 date_time = now.strftime("%m_%d_%Y_%H_%M_%S")
@@ -122,7 +138,7 @@ if not os.path.exists(rec_save_folder):
 
 nii_dat.to_filename(file_name)
 
-corrHead(file_name, dx, dy, dz,flag_interpolate_z=False)
+corrHead(file_name, dx, dy, dz,flag_interpolate_z=flag_interpolate_z)
 
 param_file = os.path.join(rec_save_folder, date_time + '-params.json')
 param_parser.save_struct_to_file(param_file)
