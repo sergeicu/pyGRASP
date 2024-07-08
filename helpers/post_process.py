@@ -37,13 +37,14 @@ def interpolate_slice(volume: np.ndarray,
         y_change = int((dim_vol[3] - img_y) / 2)
 
         if (x_change > 0) & (y_change > 0):
-            yy, xx = np.meshgrid(np.arange(x_change, dim_vol[2] - x_change),
-                                 np.arange(y_change, dim_vol[3] - y_change))
-            volume = volume[:,:,xx, yy]
+            yy, xx = np.meshgrid(
+                np.arange(x_change, dim_vol[2] - x_change),
+                np.arange(y_change, dim_vol[3] - y_change),
+            )
+            volume = volume[:, :, xx, yy]
         else:  # 0 padding
-            padding = ((-x_change, -x_change),
-                       (-y_change, -y_change), (0, 0), (0, 0))
-            volume = np.pad(volume, padding, 'constant', constant_values=0)
+            padding = ((-x_change, -x_change), (-y_change, -y_change), (0, 0), (0, 0))
+            volume = np.pad(volume, padding, "constant", constant_values=0)
 
     # oversampling
     if flag_interpolate_z:
