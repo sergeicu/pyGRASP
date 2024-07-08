@@ -11,11 +11,14 @@ from tqdm import tqdm
 class CRLMRUData(Dataset):
 
     def __init__(self, csv_root: str,
-                 type_parse: str = None):
+                 type_parse: str = None,replace_rootdir=None):
         """ csv_root(str): root folder to dataloader csv file with path info
             type_parse(str): data parsing type
                 -slice: treats each slice in a data independently """
 
+        # serge mods 
+        self.replace_rootdir = replace_rootdir 
+        
         self.csv_root = csv_root
         list_data = []
         with open(self.csv_root, 'r') as file:
@@ -86,6 +89,17 @@ class CRLMRUData(Dataset):
         dat_parse = []
 
         root_dir = os.path.dirname(self.csv_root)
+
+        # quick fix 
+        if self.replace_rootdir is not None: 
+            new1=[]
+            for j in self.primitive_dat:
+                new2=[]
+                for i in j:
+                    _ = i.replace(self.replace_rootdir[0],self.replace_rootdir[1])
+                    new2.append(_)
+                new1.append(new2)
+            self.primitive_dat = new1
 
         for item_ in tqdm(self.primitive_dat):
             folder_k3n = os.path.join(root_dir, item_[self.primitive_info.index('k3n')])
