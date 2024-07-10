@@ -1,27 +1,23 @@
 # Developed by Aziz Kocanaogullari and QUIN Lab, 02/04/2021
 import argparse
 import os
+import glob
 import time
+import argparse
+import sys 
 from copy import copy
 from datetime import datetime
 
 import numpy as np
-<<<<<<< HEAD
-import glob
-from helpers.nufft.nufft_pt import PTNufft
-=======
 import scipy.io as sio
 
->>>>>>> 1e3f384a30011f89c55da8bdbacebdbac72481d0
+
 from data_loader.crl_dataset import CRLMRUData
 from helpers.nufft.nufft_pt import PTNufft
 from helpers.pre_proces import down_sample_freq
 from parameters.param_parse import GraspParamParse
-<<<<<<< HEAD
-import scipy.io as sio
-import time
-import argparse
-import sys 
+from rec_algo.temporal_sparse.grasp import GRASP
+
 parser = argparse.ArgumentParser(description='Arguments for Grasp Reconstruction')
 parser.add_argument('-p', '--root_json',
                     required=True,
@@ -55,43 +51,6 @@ parser.add_argument('--donotoverwrite',
                     action="store_true",
                     help='only do nufft, no graps')
 
-=======
-from rec_algo.temporal_sparse.grasp import GRASP
-
-parser = argparse.ArgumentParser(description="Arguments for Grasp Reconstruction")
-parser.add_argument(
-    "-p",
-    "--root_json",
-    required=True,
-    type=str,
-    default="./parameters/grasp_params.json",
-    help="[parameters] Path to grasp_params.json file",
-)
-parser.add_argument(
-    "-d",
-    "--root_csv",
-    required=True,
-    type=str,
-    default=None,
-    help="[domain] Path to the loader.csv file",
-)
-parser.add_argument(
-    "-o",
-    "--save_root",
-    required=True,
-    type=str,
-    default=None,
-    help="[output] Path to the save location",
-)
-parser.add_argument(
-    "-sid",
-    "--subject_id",
-    required=True,
-    type=str,
-    default="sub-1",
-    help="Subject id (check loader.csv 1st column)",
-)
->>>>>>> 1e3f384a30011f89c55da8bdbacebdbac72481d0
 args = parser.parse_args()
 param_parser = GraspParamParse(
     json_path=args.root_json,
@@ -128,20 +87,12 @@ date_time = now.strftime("%m_%d_%Y_%H_%M_%S")
 if not os.path.exists(rec_save_folder):
     os.makedirs(rec_save_folder)
 
-<<<<<<< HEAD
 crl_msu_dat = CRLMRUData(root_csv_file, type_parse='slice', replace_rootdir=args.replace_rootdir)
 list_ids = [it_[crl_msu_dat.info.index('id')] for it_ in crl_msu_dat.data]
 idx_sub = [list_ids.index(it_) for it_ in list_ids if subject_id + '-' in it_]
 
 # from IPython import embed; embed()
 [num_sample, num_coil, num_spoke] = crl_msu_dat[idx_sub[0]]['k3n'].shape
-=======
-crl_msu_dat = CRLMRUData(root_csv_file, type_parse="slice")
-list_ids = [it_[crl_msu_dat.info.index("id")] for it_ in crl_msu_dat.data]
-idx_sub = [list_ids.index(it_) for it_ in list_ids if subject_id + "-" in it_]
-
-[num_sample, num_coil, num_spoke] = crl_msu_dat[idx_sub[0]]["k3n"].shape
->>>>>>> 1e3f384a30011f89c55da8bdbacebdbac72481d0
 num_slice = len(idx_sub)
 num_vol = int(np.floor(num_spoke / spv))
 
@@ -150,7 +101,6 @@ assert (num_sample / fov_factor) == nd[
     0
 ], "number of samples rescaled with field of view refactor does not match nd!"
 
-<<<<<<< HEAD
 # 
 files_exist = glob.glob(rec_save_folder +"*/raw-rec/*mat")
 if files_exist:
@@ -164,10 +114,6 @@ else:
     path_folder = os.path.join(rec_save_folder, date_time)
     
 path_raw_rec = os.path.join(path_folder, 'raw-rec')
-=======
-path_folder = os.path.join(rec_save_folder, date_time)
-path_raw_rec = os.path.join(path_folder, "raw-rec")
->>>>>>> 1e3f384a30011f89c55da8bdbacebdbac72481d0
 if not os.path.exists(path_raw_rec):
     os.makedirs(path_raw_rec)
 
@@ -216,7 +162,6 @@ for idx_s, dat_idx in enumerate(idx_sub):
         nufft_obj.adjoint(div_k_space, div_k_samples, div_sqrt_dcf, coil_p), axis=1
     )
     print("Done!")
-<<<<<<< HEAD
     # save the file here! 
     # from IPython import embed; embed()
     
@@ -249,35 +194,5 @@ for idx_s, dat_idx in enumerate(idx_sub):
 
 sys.stdout.write("Total Time Elapsed:{}".format(time.time() - t))
 param_file = os.path.join(path_folder, 'grasp_params.json')
-=======
-
-    grasp_obj = GRASP(
-        k_samples=div_k_samples,
-        sqrt_dcf=div_sqrt_dcf,
-        coil_p=coil_p,
-        nufft_obj=nufft_obj,
-        lam=grasp_lambda * np.max(np.abs(xk)),
-    )
-    xk_hat = copy(xk)
-
-    if grasp_lambda != 0:
-        for iter_grasp in range(3):
-            xk_hat = grasp_obj.reconstruct(
-                xk_hat,
-                div_k_space,
-                max_num_iter=max_num_iter,
-                max_num_line_search=max_num_ls,
-            )
-
-    _rec = {"rec": xk_hat}
-    if idx_s < 10:
-        file_name = os.path.join(path_raw_rec, "s-0" + str(idx_s) + ".mat")
-    else:
-        file_name = os.path.join(path_raw_rec, "s-" + str(idx_s) + ".mat")
-    sio.savemat(file_name, _rec)
-
-print("Total Time Elapsed:{}".format(time.time() - t))
-param_file = os.path.join(path_folder, "grasp_params.json")
->>>>>>> 1e3f384a30011f89c55da8bdbacebdbac72481d0
 param_parser.save_struct_to_file(param_file)
 #
