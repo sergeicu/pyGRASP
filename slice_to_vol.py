@@ -57,7 +57,7 @@ parser.add_argument('-o', '--root_out',
                     type=str,
                     default=None,
                     help='[output] Save path')
-parser.add_argument('--scaleto32000',
+parser.add_argument('--donotscale',
                     action="store_true",
                     help='scale images to nifti format with max val of 32000')
 parser.add_argument('--no_interpolate_z',
